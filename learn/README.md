@@ -1,8 +1,128 @@
-# C++ for Networking: learncpp Chapters 10–22
+# Learning: C++ and networking, from the UDP chat to a VPN
+
+Everything I need to learn the basics and finish the UDP chat is in this file. It covers setup, the study order, where I am now, the plan, and how I like to be taught. The six-month plan beyond the chat is in **[ROADMAP.md](ROADMAP.md)**.
+
+> **Helping me in a new session (a tutor or an AI assistant)?** Read this whole file first, especially [How to teach me](#how-to-teach-me) and [Where I am right now](#where-i-am-right-now).
+
+*Last updated: 2026-11-03. All of this work happens on the **`learning`** branch.*
+
+---
+
+## Start here
+
+### This branch
+
+```sh
+git clone https://github.com/Sushanta451/udp-chat.git
+cd udp-chat
+git switch learning
+```
+
+Work and commit on `learning`. When the chat is finished and CI is green, merge it into `main`.
+
+### Setting up a computer
+
+The code uses **POSIX sockets** (`<sys/socket.h>`). It builds on **macOS and Linux**, not native Windows.
+
+- **Windows:** install **WSL** (Ubuntu). Run `wsl --install` in PowerShell, reboot, open "Ubuntu", and do everything in there. VS Code + the "WSL" extension edits the files.
+- **Linux / WSL packages:** `sudo apt update && sudo apt install -y build-essential clang cmake git`
+- **macOS:** `xcode-select --install`, plus `brew install cmake`
+
+```sh
+cmake -S learn -B learn/build          # once
+cmake --build learn/build              # after every change
+./learn/build/net3_beej_ch3_ch5_sockets
+ctest --test-dir learn/build --output-on-failure   # the assignment tests
+
+cmake -S . -B build && cmake --build build         # the real chat (src/)
+```
+
+Linux differs from macOS in a few small ways: `sockaddr_in` has no `sin_len` field (one more reason to never write your own), the ephemeral port range is 32768–60999, and ports below 1024 need root.
+
+---
+
+## Study order
+
+Do these in order. Each row ends with something you can run.
+
+| # | What | Where | Done when |
+|---|---|---|---|
+| 1 | C++ chapters 10–22 + F | [chapters/](chapters/), table below | you can answer each file's CHECK YOURSELF out loud |
+| 2 | C++ prep for networking | [net1](networking/net1_error_handling.cpp), [net2](networking/net2_program_structure.cpp) | you've run both and done their TRY IT |
+| 3 | **Beej ch 3**: addresses, ports, byte order, `sockaddr`, `inet_pton`, NAT | [beej/ch03_addresses_byte_order_structs.md](beej/ch03_addresses_byte_order_structs.md) | every check-yourself question answered |
+| 4 | Beej ch 3 practice | [beej/ch03_practice.cpp](beej/ch03_practice.cpp) (`TODO(human)`) | it prints `PASS` |
+| 5 | **Beej ch 5**: `getaddrinfo`, `socket`, `bind`, `sendto`/`recvfrom`, `connect`, `close` | Beej PDF + [net3](networking/net3_beej_ch3_ch5_sockets.cpp). *In-depth guide `beej/ch05_*.md` still to write.* | a **one-way chat** you wrote: one program prints, the other sends lines |
+| 6 | **Beej 6.3, 7.1, 7.2**: datagram examples, blocking, `poll()` | Beej PDF, then [net4](networking/net4_beej_ch7_udp_and_poll.cpp) | a **two-way chat** you wrote (try it before reading net4) |
+| 7 | Assignment Part A: the packet | [assignment/](assignment/README.md) | packet tests pass |
+| 8 | Assignment Part B: the sequence tracker | [assignment/](assignment/README.md) | `19/19 tests passed`, clean under `-fsanitize=address,undefined` |
+| 9 | Assignment Part C: **the real chat** in `src/` | [assignment/README.md](assignment/README.md#part-c-make-it-a-real-chat) | see "Done when" below |
+
+---
+
+## Where I am right now
+
+| Item | Status |
+|---|---|
+| learncpp chapters 10–22 | lessons written; working through them |
+| Beej ch 3 guide | ✅ written |
+| Beej ch 3 practice: `make_loopback()` | ⬜ **my next task** |
+| Beej ch 5 guide | ⬜ **next to write**, in the same format as ch 3 |
+| Beej ch 7 guide (blocking, poll, encapsulation) | ⬜ after ch 5 |
+| Assignment A + B | ⬜ not started (`assignment_tests`: 2/19) |
+| Assignment C (the chat) | ⬜ |
+| `src/main.cpp` | ⚠️ **doesn't compile** yet. It has my first attempt at a `sockaddr_in4` struct, which was wrong: a 4-byte family, a 16-bit IPv4 address, and you shouldn't define your own sockaddr at all. Delete it and use `sockaddr_in` from `<netinet/in.h>`. CI stays red until it compiles. |
+
+### What I've already learned (don't re-teach unless I ask)
+
+- **IPv4** = 4 bytes (`uint32_t`), **IPv6** = 16 bytes. IPv6 is stored as a byte array (`uint8_t[16]`), not a 128-bit int; standard C++ has none.
+- **Subnets / CIDR** (network part + host part, the netmask AND), **ports** (16-bit; the well-known / registered / ephemeral ranges; port 0 = "OS picks"), **NAT** (the router's mapping table; why keepalives exist).
+- **Byte order:** the network is big-endian, my Mac is little-endian. `htons` is needed even Mac-to-Mac, because the kernel requires network order in `sin_port`: `sin_port = 4950` without `htons` silently binds port 22035. Don't convert single bytes, strings, byte arrays, or `inet_pton` output. Convert once, at the boundary.
+- **`sockaddr` structs:** generic `sockaddr*` + a specific struct + a length; `sockaddr_storage` for receiving.
+
+---
+
+## Finishing the UDP chat
+
+### Done when
+
+- Two terminals chat: `./build/udpchat --port 9000 --peer 127.0.0.1:9001` and the mirror image.
+- `--drop 30` on one side produces correct `gap` / `late` / `duplicate` warnings.
+- CI is green on Ubuntu and macOS, and the main README's example output matches what really happens.
+
+### Spec
+
+- **Flags:** `--port <n>` (required), `--peer <ip>:<port>` (required), `--drop <0-100>` (optional, % of sends to skip on purpose). Bad flags print usage and exit 1.
+- **Packet:** a 4-byte big-endian sequence number (starting at 1), then the UTF-8 text. Max text is `kMaxText` in [assignment/packet.h](assignment/packet.h). Never `memcpy` a struct onto the wire.
+- **Receiving:** `[peer] #N text`, plus `[warn] gap: #4 missing`, `[warn] late: #4`, `[warn] duplicate: #5 already received`.
+- **Bad packets** (too short, too long) are ignored. The program never crashes on network input.
+- **`/quit`** prints a summary like `received 47, missing 3: #4 #19 #33`.
+- **Structure:** `packet.*` and `sequence_tracker.*` go in a `chatcore` library (net2 shows how), with a small `main.cpp`. The socket is a RAII class.
+
+### After the chat
+
+ROADMAP Phase 2: a sliding-window replay bitmap (`std::bitset<64>`, RFC 6479), fuzzing `decode()`, and the basics of IP/UDP headers. Then encryption (Phase 3).
+
+---
+
+## How to teach me
+
+- I'm a beginner-to-intermediate C++ learner. I used to let AI write my code; now I'm learning to write it myself. **Goal:** a secure VPN in C++ by about April 2027, for new-grad jobs. This chat is step one.
+- **Plain words, short sentences, analogies.** Define jargon the first time.
+- **Go section by section, in depth.** It's my first time seeing this material. For each topic: what it is, worked examples, real scenarios where it breaks, then check-yourself questions with hidden answers. Aim to make me a pro.
+- **Code only where it helps.** Concepts like byte order are better taught with tables and worked numbers.
+- I'm reading **[Beej's Guide to Network Programming](https://beej.us/guide/bgnet/)** (written in C). Teach it **in C++** (RAII, `std::array`, exceptions), and tag everything with its Beej section number. Put new guides in `learn/beej/` (format: `ch03_*.md` + `ch03_practice.cpp`).
+- **I write my own chat** in `src/main.cpp`. Review my code and point out bugs. Give hints before solutions. Don't rewrite it for me.
+- **Learning mode:** ask me to write small pieces (2–10 lines) at the real design decisions, marked `TODO(human)` in the file, with only one at a time.
+- Connect ideas to the VPN where it's natural (replay protection, NAT keepalives, TUN routing).
+- **Git:** I commit and push myself, unless I explicitly ask in the moment. **No `Co-Authored-By` or any AI attribution in commits or PRs, ever.** This repo is public.
+
+**To start a new session, say:** *"Read `learn/README.md`. I'm on step N of the study order. Teach me the way it describes, in learning mode."* Then say what you want ("write the Beej chapter 5 guide", "review my main.cpp", "I'm stuck on …"). If your tool has a "learning" output style, turn it on. It's a per-computer setting, so it doesn't come with the repo.
+
+---
+
+## About the C++ lessons
 
 This folder teaches the C++ you need to build a **secure VPN**. It follows [learncpp.com](https://www.learncpp.com) chapters 10 to 22, every lesson in every chapter, and explains each one with a networking example.
-
-The plan for the whole six months is in **[ROADMAP.md](ROADMAP.md)**. Where I am right now, and what to do next: **[PROGRESS.md](PROGRESS.md)**.
 
 ## What a VPN actually does (the 30-second version)
 
