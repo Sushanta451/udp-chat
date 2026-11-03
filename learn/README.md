@@ -48,7 +48,7 @@ Do these in order. Each row ends with something you can run.
 | # | What | Where | Done when |
 |---|---|---|---|
 | 1 | C++ chapters 10–22 + F | [chapters/](chapters/), table below | you can answer each file's CHECK YOURSELF out loud |
-| 2 | C++ prep for networking | [net1](networking/net1_error_handling.cpp), [net2](networking/net2_program_structure.cpp) | you've run both and done their TRY IT |
+| 2 | **Toolboxes** (skim once, come back when needed): net1 = what to do when things fail, net2 = files, CMake, flags, random, time | [net1](networking/net1_error_handling.cpp), [net2](networking/net2_program_structure.cpp) | you've run both once. Each file's "WHEN TO OPEN THIS FILE" table says when to come back |
 | 3 | **Beej ch 3**: addresses, ports, byte order, `sockaddr`, `inet_pton`, NAT | [beej/ch03_addresses_byte_order_structs.md](beej/ch03_addresses_byte_order_structs.md) | every check-yourself question answered |
 | 4 | Beej ch 3 practice | [beej/ch03_practice.cpp](beej/ch03_practice.cpp) (`TODO(human)`) | it prints `PASS` |
 | 5 | **Beej ch 5**: `getaddrinfo`, `socket`, `bind`, `sendto`/`recvfrom`, `connect`, `close` | Beej PDF + [net3](networking/net3_beej_ch3_ch5_sockets.cpp). *In-depth guide `beej/ch05_*.md` still to write.* | a **one-way chat** you wrote: one program prints, the other sends lines |
@@ -194,7 +194,7 @@ These aren't part of chapters 10–22, but the VPN needs them. Do them **in orde
 | 3 | [net3_beej_ch3_ch5_sockets.cpp](networking/net3_beej_ch3_ch5_sockets.cpp) | ch 3, ch 5 | IP addresses, byte order, the `sockaddr` structs, `getaddrinfo`, `socket`/`bind`/`sendto`/`recvfrom` |
 | 4 | [net4_beej_ch7_udp_and_poll.cpp](networking/net4_beej_ch7_udp_and_poll.cpp) | 7.1, 7.2, 7.6 | blocking, `poll()`, a packet format: the engine of the chat (and of the VPN) |
 
-Files 1 and 2 are C++ tools you'll use everywhere. Files 3 and 4 are the networking itself. If you only want sockets right now, files 3 then 4 are the path.
+**Files 1 and 2 are toolboxes, not networking.** net1 answers "something failed, now what?" and net2 answers "how do I turn one file into a real program with flags and several files?". Skim them once, then reopen them when your chat hits one of the moments in their "WHEN TO OPEN THIS FILE" table. Files 3 and 4 are the networking itself.
 
 ### Then: the assignment
 

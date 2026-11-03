@@ -8,6 +8,27 @@
 //   the packet/tracker code without dragging in sockets. The chat also needs
 //   to parse --port/--peer/--drop, roll dice for --drop, and maybe timestamp.
 //
+// WHAT THIS FILE IS (AND ISN'T)
+//   Also NOT networking. It's the GLUE every real program needs that school
+//   exercises usually skip: splitting code into several files, how CMake
+//   builds them, reading flags from the command line, random numbers, and
+//   time. A one-file practice program doesn't need it. Your chat does.
+//
+// WHEN TO OPEN THIS FILE (the exact moments in YOUR chat)
+//   You're...                                           Look at
+//   ---------------------------------------------------  -------------------------
+//   moving packet/tracker code out of main.cpp           2 headers vs .cpp
+//   seeing "undefined symbol" or "duplicate symbol"      1 build pipeline, 3 ODR
+//   adding a chatcore library to CMakeLists.txt          4 CMake
+//     (assignment Part C, step 1)
+//   reading --port 9000 --peer ... --drop 10             5 parseArgs + Options
+//   making --drop "lose" a random 10% of messages        6 DropSimulator
+//   giving poll() a timeout, timestamping messages       7 chronoDemo
+//
+// THE WHOLE FILE IN ONE SENTENCE
+//   It's how a single-file experiment becomes a real program with flags,
+//   several files, and tests.
+//
 // TOPICS
 //   1. How a C++ program is built: preprocess → compile → link
 //   2. Headers (.h) vs source files (.cpp). What goes where. #pragma once

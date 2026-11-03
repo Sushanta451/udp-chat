@@ -8,6 +8,32 @@
 //   ("--port banana"). Packets arrive too short or corrupted. You need a plan
 //   for each kind of failure.
 //
+// WHAT THIS FILE IS (AND ISN'T)
+//   It is NOT networking theory, and it's not something you "finish". It's a
+//   TOOLBOX: the C++ ways to handle "something went wrong". Network code fails
+//   all the time, so you'll reach into this box every time you write a socket
+//   call or read user input. Skim it once; come back when you hit a moment
+//   from the table below.
+//
+// WHEN TO OPEN THIS FILE (the exact moments in YOUR chat)
+//   You're writing...                                   Look at
+//   ---------------------------------------------------  -------------------------
+//   if (bind(...) == -1) { ...now what? }                1 errnoDemo
+//   socket setup failed and the chat can't run           2 openUdpSocketOrThrow,
+//                                                          then catch it in main
+//   reading "--port banana" or "--port 70000"            3 parsePort (optional)
+//   reading "--peer 127.0.0.1:9001" and saying WHAT      4 parsePeer (Result)
+//     was wrong with it
+//   decode() got a 3-byte packet from the network        3: return nullopt, drop
+//                                                          it, keep running
+//   "seq can never be 0 here, or my code has a bug"      5 nextSeq (assert)
+//   your Socket class's destructor                       6 noexcept
+//   not sure which of these to use                       7 the table at the bottom
+//
+// THE WHOLE FILE IN ONE RULE
+//   Setup fails → throw. Bad input or a bad packet → return "no value" and
+//   carry on. My own bug → assert. Never crash because of what a peer sent.
+//
 // TOPICS
 //   1. C-style return codes + errno + strerror (how the socket API reports errors)
 //   2. Exceptions: throw / try / catch, and why RAII makes them safe
