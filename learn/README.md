@@ -2,7 +2,7 @@
 
 This folder teaches the C++ you need to build a **secure VPN**. It follows [learncpp.com](https://www.learncpp.com) chapters 10 to 22, every lesson in every chapter, and explains each one with a networking example.
 
-The plan for the whole six months is in **[ROADMAP.md](ROADMAP.md)**.
+The plan for the whole six months is in **[ROADMAP.md](ROADMAP.md)**. Where I am right now, and what to do next: **[PROGRESS.md](PROGRESS.md)**.
 
 ## What a VPN actually does (the 30-second version)
 

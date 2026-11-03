@@ -90,7 +90,7 @@ Once 19/19 pass, you have everything needed for the real program. This part has 
 
 1. **Move your code into the project.** Copy `packet.*` and `sequence_tracker.*` into `src/`. In the root [CMakeLists.txt](../../CMakeLists.txt), make a `chatcore` library and link it into `udpchat` ([net2_program_structure.cpp](../networking/net2_program_structure.cpp) shows the four lines).
 2. **Parse the flags:** `--port 9000 --peer 127.0.0.1:9001 --drop 10`. Use `parsePort` and `parsePeer` from net1 and `Options` from net2, plus argc/argv from ch20.4. Bad input prints usage and returns 1.
-3. **Open the socket:** the RAII `Socket` class from net4 (and ch22), `bind` to `--port` on any address (`INADDR_ANY`). Turn `--peer` into a `sockaddr` with `resolve()` from [main.cpp](../../src/main.cpp).
+3. **Open the socket:** the RAII `Socket` class from net4 (and ch22), `bind` to `--port` on any address (`INADDR_ANY`). Turn `--peer` into a `sockaddr` with `resolve()` from [net3_beej_ch3_ch5_sockets.cpp](../networking/net3_beej_ch3_ch5_sockets.cpp) (getaddrinfo + RAII).
 4. **The loop:** `poll` on `STDIN_FILENO` **and** the socket (net4 shows the pseudocode).
    - Keyboard ready: `std::getline`. `/quit` stops the loop. Otherwise `encode` with the next seq, roll the `DropSimulator` (net2), and `sendto` unless the roll says drop.
    - Socket ready: `recvfrom`, then `decode` (ignore bad packets), then `tracker.onReceive`. Print `[peer] #N text`, plus `[warn] gap: #4 missing`, `[warn] late: #4`, or `[warn] duplicate: #5 already received`.
@@ -101,6 +101,6 @@ Once 19/19 pass, you have everything needed for the real program. This part has 
 
 - **Replay window:** replace the `std::set` with a fixed-size sliding window, a `std::bitset<64>` plus the highest number seen. Anything older than 64 behind is rejected. This uses constant memory no matter how many packets get lost, which matters when an attacker can make you "lose" millions. It's Phase 2 of the [roadmap](../ROADMAP.md).
 
-- Support IPv6 peers (`[::1]:9001`). `sockaddr_storage` and `addressToString` from main.cpp already handle the receive side.
+- Support IPv6 peers (`[::1]:9001`). `sockaddr_storage` and `to_string()` from net3 already handle the receive side.
 - The sender only knows a message was lost if the receiver says so. Design a small "ACK" packet type. What has to change in the wire format?
 - Write tests for your `--peer` parser in `tests/`, and update [tests/CMakeLists.txt](../../tests/CMakeLists.txt) so `ctest` runs them.
